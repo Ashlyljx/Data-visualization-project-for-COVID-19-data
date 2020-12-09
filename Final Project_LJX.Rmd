@@ -1,31 +1,33 @@
 ---
-title: "Final project"
+title: "Final project: COVID-19 Data Visualization"
 author: "Jiaxuan Li"
-date: "11/16/2020"
+date: "12/08/2020"
 output: html_document
 ---
-Summary: Because I currently don't have data in hand, neither do our lab members. Thus, I downloaded the COVID-19 data from WHO (https://covid19.who.int/table).This project is focuesed on the COVID-19 data in different countries from January to November in order to explore the pandemic situation. ALthough a lot of online sources had already done a lot of analysis of the COVID-19 data and they made good visualization plots. However, it's a good practice for me how to manipulate data, clean data, and mutate data no matter what data is.
-
-In this project, I firstly ploted the COVID-19 data for China and the United States from Jan to Nov using simple line plot, boxplot and facet as well. Secondly, I 
-
-
 
 ```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction: 
+Because I currently don't have data in hand, neither do our lab members. Thus, I downloaded the COVID-19 data from WHO (https://covid19.who.int/table).This project is focuesed on the COVID-19 data in different countries from January to November in order to explore the pandemic situation. Although a lot of online sources had already done a lot of analysis of the COVID-19 data and they made good visualization plots. However, it's a good practice for me how to manipulate data, clean data, and mutate data. In this project, line plot, barplot, facet, heatmap and animation were used. 
+
+# Load in libraries
+```{r}
 ##install packages and load in libraries
 library(ggplot2)
-install.packages("lubridate")
+##install.packages("lubridate")
 library(lubridate)
 library(dplyr)
 library(ggpubr)
 library(viridis)
-install.packages("sf")
-library(sf)
+library(gganimate)
 
 ```
 
 
-
-1. Load in the dataset, which is downloaded from WHO(). Take a glimpse at the dataset.
+# 1. Load in the dataset:
+ 1. Load in the dataset, which is downloaded from WHO (https://covid19.who.int/table). Take a glimpse at the dataset.
 ```{r}
 getwd()
 
@@ -46,11 +48,12 @@ getwd()
 
 
 
-2. Change the date settings firat since it's too intense if plot the data on every day, whcih will be used later. 
+# 2. Change the date settings 
+Change the date settings since it's too intense if plot the data on every day, whcih will be used later. 
 
 ```{r}
 ##install "lubridate" package (https://rawgit.com/rstudio/cheatsheets/master/lubridate.pdf), which is specificlly designed for maniplating date related data
-install.packages("lubridate")
+##install.packages("lubridate")
 library(lubridate)
 
 
@@ -65,23 +68,27 @@ date_breaks <- seq(as.Date("2020-01-03"), as.Date("2020-11-14"), by = "1 month" 
 ```
 
 
-3. Plot the change of COVID-19 from Jan to Dec in China
+# 3. Plot the COVID-19 data from Jan to Nov in China
+## 3.1 Make line plots
 ```{r}
-##filter function is in the dplyr package
-library(dplyr)
+##Filter function is in the dplyr package
+##library(dplyr)
 
-##subset the covid-19 data for China
+##Subset the covid-19 data for China
 data_china = filter(data, data$Country_code == "CN")
 dim(data_china)
 head(data_china)
 
-##Make the first line plot! Plot the COVID-19 data in China from January to December.
+##Make the first line plot! 
+##Plot the COVID-19 data in China from January to December.
 ggplot(data_china, aes(x=Date_reported, y=Cumulative_cases)) + 
-  geom_point() + labs(title="Cumulative_cases in China") 
+  geom_line() + 
+  labs(title="Cumulative_cases in China") 
 
-##Plot the Cumulative_cases in China from January to December.
+##Plot the Cumulative_cases in China from January to Novermber.
 gp_china_1 = ggplot(data_china, aes(x=Date_reported, y=Cumulative_cases)) + 
-  geom_point(color='lightgreen', size = 0.5) + labs(title="Cumulative_cases in China") + 
+  geom_point(color='lightgreen', size = 0.5) + 
+  labs(title="Cumulative_cases in China") + 
   geom_line()+
   scale_x_date(breaks = date_breaks) +       
   theme(axis.text.x = element_text(angle = 90, vjust = 0.2 , hjust=0.2))
@@ -89,7 +96,8 @@ gp_china_1
 
 ##Plot the new_cases in China from January to December.
 gp_china_2 = ggplot(data_china, aes(x=Date_reported, y=New_cases)) +
-  geom_point(color='lightblue', size = 0.5) + labs(title="New_cases in China") + 
+  geom_point(color='lightblue', size = 0.5) + 
+  labs(title="New_cases in China") + 
   geom_line()+
   scale_x_date(breaks = date_breaks) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.2, hjust=0.2))
@@ -98,7 +106,8 @@ gp_china_2
 
 ##Plot the new deaths in China from January to December.
 gp_china_3 = ggplot(data_china, aes(x=Date_reported, y=New_deaths)) + 
-  geom_point(color='lightblue', size = 0.5) + labs(title="New deaths in China") + 
+  geom_point(color='lightblue', size = 0.5) + 
+  labs(title="New deaths in China") + 
   geom_line()+
   scale_x_date(breaks = date_breaks) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.2, hjust=0.2))
@@ -106,40 +115,72 @@ gp_china_3
 
 ##Plot the cumulative deaths in China from January to December.
 gp_china_4 = ggplot(data_china, aes(x=Date_reported, y=Cumulative_deaths)) + 
-  geom_point(color='lightgreen', size = 0.5) + labs(title="Cumulative_deaths in China")  +
+  geom_point(color='lightgreen', size = 0.5) + 
+  labs(title="Cumulative_deaths in China")  +
   geom_line()+
   scale_x_date(breaks = date_breaks) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.2, hjust=0.2))
 gp_china_4
 
+
+##Make multiple plots for the covid-19 data in China at the same time using a for loop
+cases_cn = names(data_china[,c(5:8)])
+cases_cn
+for (i in c(5:8)){
+colnames =  data_china[,i]
+print(ggplot(data_china, aes(x = Date_reported, y = colnames)) +
+  geom_line(col = "red") +
+  theme_classic() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  ylab(cases_cn[i-4]) ##name the y axis accordingly.
+)
+}
+
+
 ```
 
-
+## 3.2 Make facet plots and heatmap
 ```{r}
 ##Make a facet (https://www.datanovia.com/en/lessons/combine-multiple-ggplots-into-a-figure/) for the COVID-19 data in China
 library(ggpubr)
 ggarrange(gp_china_1, gp_china_2, gp_china_3, gp_china_4, ncol = 2, nrow = 2) + geom_jitter()
+
+
+##Here is a heatmap for the Cumulative_cases in China.
+ggplot(data_china, aes(y = Date_reported , x = Country, fill = Cumulative_cases))+
+  scale_y_date(breaks = date_breaks) +  geom_tile()  + scale_fill_viridis_c() 
 ```
 
-
+## 3.3 Make barplots
 ```{r}
-###Make barplots for data in China; overlay a line plot with a box plot
+###Make barplots for data in China; 
+## Overlay a line plot with a box plot for the Cumulative_cases and New_cases in China
 bp_china1 = ggplot(data_china, aes(x=Date_reported, y=Cumulative_cases)) + 
-  geom_bar(stat = "identity", color = "lightblue") + labs(title="Cumulative_cases in China") + 
-  geom_line(aes(x=Date_reported, y=New_cases), color = "red") 
+  geom_bar(stat = "identity", color = "lightblue") + 
+  labs(title="Cumulative_cases in China") + 
+  geom_line(aes(x=Date_reported, y=Cumulative_cases, color = "Cumulative_cases")) +
+  geom_line(aes(x=Date_reported, y=New_cases, color = "New_cases")) + 
+  scale_color_manual(name = "COVID-19 deaths", values = c("Cumulative_cases" = "yellow", "New_cases" = "red" )) ##add the legend manually. 
 bp_china1
 
+
+## Overlay a line plot with a box plot for the Cumulative_deaths and New_deaths in China
 bp_china2 = ggplot(data_china, aes(x=Date_reported, y=Cumulative_deaths)) + 
-  geom_bar(stat = "identity", color = "lightblue") + labs(title="Cumulative_deaths in China") + 
-  geom_line(aes(x=Date_reported, y=New_deaths), color = "red") + legend (legend = "New deaths in China", col = red, cex = 0.8)
+  geom_bar(stat = "identity", color = "lightblue") + 
+  labs(title="Cumulative_deaths in China") + 
+  geom_line( aes(x=Date_reported, y=Cumulative_deaths, color = "Cumulative_deaths")) + 
+  geom_line(aes(x=Date_reported, y=New_deaths, color = "New_deaths")) + 
+  scale_color_manual(name = "COVID-19 deaths", values = c("Cumulative_deaths" = "yellow", "New_deaths" = "red")) ##add the legend manually. 
 bp_china2 
 
-##make a facet for the boxplots for the COVID-19 data in China
+##make a facet for the barplots for the COVID-19 data in China
 ggarrange(bp_china1, bp_china2, ncol = 2, nrow = 1) 
 ```
 
 
-4. Plot the COVID-19 data in US from Jan to Dec
+# 4. Plot the COVID-19 data in US from Jan to Nov
+## 4.1 Make line plots 
 
 ```{r}
 ##Subset the covid-19 data for US
@@ -147,40 +188,67 @@ data_US = filter(data, data$Country_code == "US")
 
 ##Make a simple line plot for the Cumulative_cases in the US
 ggplot(data_US, aes(x=Date_reported, y=Cumulative_cases)) + 
-  geom_point(color = "lightblue") + 
-  geom_line()
-  labs(title="Cumulative_cases in US") 
-
-##Make a simple line plot for the Cumulative_cases in the US using a differnt x scale.
-ggplot(data_US, aes(x=Date_reported, y=Cumulative_cases)) + 
-  geom_point() + labs(title="Cumulative_cases in US") + 
-  scale_x_date(breaks = date_breaks) +  
+  geom_line(col = "red") + 
+  theme_classic() +
+  labs(title="Cumulative_cases in US") + 
+  scale_x_date(breaks = date_breaks) + 
+  theme(legend.position = "none",plot.title = element_text(hjust = 0.5)) +
   theme(axis.text.x = element_text(angle = 45, vjust = 0, hjust=0))
 
-##Make a facet plot for the covid-19 data in the US
-##Build up a function and use lapply function to plot multiple plots at the same time
-cases = c("Cumulative_cases", "New_cases", "Cumulative_deaths", "New_deaths")
-plot_names = c ("gp_US1", "gp_US2", "gp_US3", "gp_US4")
 
-plotmultiplelines = function (colnames){
-  ggplot(data_US, aes_(x = ~Date_reported, y = as.name(colnames))) +
-    geom_point()+ facet_wrap(~ variable, scales = "free_y") 
+##Make multiple line plots for the covid-19 data in the US using a for loop
+cases = names(data_US[,c(5:8)])
+cases
+for (i in c(5:8)){
+  colnames =  data_US[,i]
+print(ggplot(data_US, aes(x = Date_reported, y = colnames)) +
+  geom_line(col = "red") +
+  theme_classic() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  ylab(cases[i-4]) ##name the y axis accordingly.
+)
 }
-
-
-lapply(names(data_US[c(5:8)]), plotmultiplelines)
-
-
-
-ggarrange(gp_china_1, gp_china_2, gp_china_3, gp_china_4, ncol = 2, nrow = 2) + geom_jitter()
 
 
 
 ```
 
+## 4.2 Make barplots
+```{r}
+##Make a simple barplot for the Cumulative_cases in the US
+ggplot(data_US, aes(x=Date_reported, y=Cumulative_cases)) + 
+  geom_bar(stat = "identity", color = "lightblue") + 
+  theme_classic() +
+  labs(title="Cumulative_cases in US") + 
+  scale_x_date(breaks = date_breaks) + 
+  theme(legend.position = "none",plot.title = element_text(hjust = 0.5)) +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0, hjust=0))
+
+##Make multiple bar plots for the covid-19 data in the US using a for loop
+cases = names(data_US[,c(5:8)])
+cases
+for (i in c(5:8)){
+  colnames =  data_US[,i]
+print(ggplot(data_US, aes(x = Date_reported, y = colnames)) +
+  geom_bar(stat = "identity", color = "lightblue") + 
+  theme_classic() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  ylab(cases[i-4]) ##name the y axis accordingly.
+)
+}
+```
+## 4.3 Make a heatmap 
+
+```{r}
+##Here is a heatmap for the Cumulative_cases in the US.
+ggplot(data_US, aes(y = Date_reported , x = Country, fill = Cumulative_cases))+
+  scale_y_date(breaks = date_breaks) +  geom_tile()  + scale_fill_viridis_c() 
+```
 
 
-5. Make heatmaps for several selected countries. 
+# 5. Make heatmaps and factes for several selected countries. 
 
 ```{r}
 ##Make a heatmap for all the countries in the original dataset
@@ -197,29 +265,42 @@ ggplot(selected_country, aes(y = Date_reported , x = Country, fill = Cumulative_
   scale_y_date(breaks = date_breaks) +  geom_tile()  + scale_fill_viridis_c() + 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.2, hjust=0.2))
 
-##Here is another heatmap for the Cumulative_cases in the US.
-ggplot(data_US, aes(y = Date_reported , x = Country, fill = Cumulative_cases))+
-  scale_y_date(breaks = date_breaks) +  geom_tile()  + scale_fill_viridis_c() 
+##Make factes for several selected countries. 
+  ggplot(selected_country, aes(x = Date_reported, y = Cumulative_deaths, color = "blue")) +
+  geom_line()+
+  theme_classic() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  facet_wrap(~Country, nrow = 2)
+
 ```
-Brief Summary: 
 
 
-6. Plot a map for several selected countries.
+
+# 6. Plot a animation for the selected_country dataset
 ```{r}
-install.packages("sf")
-library(sf)
-ggplot(data) + 
-    geom_sf()
+library(gganimate)
+
+##plot a single geom_point plot for the selected_country dataset
+Animation = ggplot(selected_country, aes(x = New_cases, y = Cumulative_cases,color = Country))+
+  geom_point(show.legend = FALSE, alpha = 0.7, size = 2.0) +
+  scale_color_viridis_d() +
+  scale_size(range = c(1, 5)) 
+
+Animation
+
+##Transition by time
+Animation + transition_time(Date_reported) + labs (title = "Date:{frame_time}") 
+  ##+ scale_x_date(breaks = date_breaks)
+  
+
+##Make a facet by country
+Animation + facet_wrap(~Country) + 
+  transition_time(Date_reported) + 
+  labs (title = "Date:{frame_time}") +
+  shadow_mark(alpha = 1, size = 0.5)+
+  view_follow(fixed_y = TRUE) 
 
 
 ```
 
-
-
-
-
-7. Make an interactive plot
-
-```{r}
-
-```
